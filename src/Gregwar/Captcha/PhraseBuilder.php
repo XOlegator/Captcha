@@ -1,28 +1,28 @@
 <?php
 
-namespace Gregwar\Captcha;
-
 /**
  * Generates random phrase
  *
  * @author Gregwar <g.passault@gmail.com>
  */
+
+declare(strict_types=1);
+
+namespace Gregwar\Captcha;
+
 class PhraseBuilder implements PhraseBuilderInterface
 {
-    /**
-     * @var int
-     */
-    public $length;
+    public int $length = 5;
 
-    /**
-     * @var string
-     */
-    public $charset;
+    public string $charset = 'abcdefghijklmnpqrstuvwxyz123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
     /**
      * Constructs a PhraseBuilder with given parameters
      */
-    public function __construct($length = 5, $charset = 'abcdefghijklmnpqrstuvwxyz123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-    {
+    public function __construct(
+        ?int $length = 5,
+        ?string $charset = 'abcdefghijklmnpqrstuvwxyz123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    ) {
         $this->length = $length;
         $this->charset = $charset;
     }
@@ -30,7 +30,7 @@ class PhraseBuilder implements PhraseBuilderInterface
     /**
      * Generates  random phrase of given length with given charset
      */
-    public function build($length = null, $charset = null)
+    public function build(?int $length = null, ?string $charset = null): string
     {
         if ($length !== null) {
             $this->length = $length;
@@ -40,7 +40,7 @@ class PhraseBuilder implements PhraseBuilderInterface
         }
 
         $phrase = '';
-        $chars = str_split($this->charset);
+        $chars = mb_str_split($this->charset);
 
         for ($i = 0; $i < $this->length; $i++) {
             $phrase .= $chars[array_rand($chars)];
@@ -52,7 +52,7 @@ class PhraseBuilder implements PhraseBuilderInterface
     /**
      * "Niceize" a code
      */
-    public function niceize($str)
+    public function niceize(string $str): string
     {
         return self::doNiceize($str);
     }
@@ -60,15 +60,15 @@ class PhraseBuilder implements PhraseBuilderInterface
     /**
      * A static helper to niceize
      */
-    public static function doNiceize($str)
+    public static function doNiceize(string $str): string
     {
-        return strtr(strtolower($str), '01', 'ol');
+        return strtr(mb_strtolower($str), '01', 'ol');
     }
 
     /**
      * A static helper to compare
      */
-    public static function comparePhrases($str1, $str2)
+    public static function comparePhrases(string $str1, string $str2): bool
     {
         return self::doNiceize($str1) === self::doNiceize($str2);
     }

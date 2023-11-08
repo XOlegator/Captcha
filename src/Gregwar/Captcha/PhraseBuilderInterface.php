@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Gregwar\Captcha;
 
 /**
@@ -12,10 +14,10 @@ interface PhraseBuilderInterface
     /**
      * Generates  random phrase of given length with given charset
      */
-    public function build();
+    public function build(): string;
 
     /**
      * "Niceize" a code
      */
-    public function niceize($str);
+    public function niceize(string $str): string;
 }

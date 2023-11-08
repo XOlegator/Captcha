@@ -1,9 +1,5 @@
 <?php
 
-namespace Gregwar\Captcha;
-
-use \Exception;
-
 /**
  * Builds a new captcha image
  * Uses the fingerprint parameter, if one is passed, to generate the same image
@@ -11,6 +7,13 @@ use \Exception;
  * @author Gregwar <g.passault@gmail.com>
  * @author Jeremy Livingston <jeremy.j.livingston@gmail.com>
  */
+
+declare(strict_types=1);
+
+namespace Gregwar\Captcha;
+
+use \Exception;
+
 class CaptchaBuilder implements CaptchaBuilderInterface
 {
     /**
@@ -349,14 +352,14 @@ class CaptchaBuilder implements CaptchaBuilderInterface
         $y = (int) round(($height - $textHeight) / 2) + $size;
 
         if (!$this->textColor) {
-            $textColor = array($this->rand(0, 150), $this->rand(0, 150), $this->rand(0, 150));
+            $textColor = [$this->rand(0, 150), $this->rand(0, 150), $this->rand(0, 150)];
         } else {
             $textColor = $this->textColor;
         }
         $col = \imagecolorallocate($image, $textColor[0], $textColor[1], $textColor[2]);
 
         // Write the letters one by one, with random angle
-        for ($i=0; $i<$length; $i++) {
+        for ($i = 0; $i < $length; $i++) {
             $symbol = mb_substr($phrase, $i, 1);
             $box = \imagettfbbox($size, 0, $font, $symbol);
             $w = $box[2] - $box[0];
@@ -374,8 +377,12 @@ class CaptchaBuilder implements CaptchaBuilderInterface
      */
     public function isOCRReadable()
     {
-        if (!is_dir($this->tempDir)) {
-            @mkdir($this->tempDir, 0755, true);
+        if (
+            !is_dir($this->tempDir)
+            && !mkdir($concurrentDirectory = $this->tempDir, 0755, true)
+            && !is_dir($concurrentDirectory)
+        ) {
+            throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
         }
 
         $tempj = $this->tempDir . uniqid('captcha', true) . '.jpg';
@@ -404,7 +411,7 @@ class CaptchaBuilder implements CaptchaBuilderInterface
     /**
      * Generate the image
      */
-    public function build($width = 150, $height = 40, $font = null, $fingerprint = null)
+    public function build(?int $width = 150, ?int $height = 40, ?string $font = null, ?string $fingerprint = null)
     {
         if (null !== $fingerprint) {
             $this->fingerprint = $fingerprint;
@@ -415,7 +422,7 @@ class CaptchaBuilder implements CaptchaBuilderInterface
         }
 
         if ($font === null) {
-            $font = __DIR__ . '/Font/captcha'.$this->rand(0, 5).'.ttf';
+            $font = __DIR__ . '/Font/captcha' . $this->rand(0, 5) . '.ttf';
         }
 
         if (empty($this->backgroundImages)) {
@@ -430,7 +437,7 @@ class CaptchaBuilder implements CaptchaBuilderInterface
             imagefill($image, 0, 0, $bg);
         } else {
             // use a random background image
-            $randomBackgroundImage = $this->backgroundImages[rand(0, count($this->backgroundImages)-1)];
+            $randomBackgroundImage = $this->backgroundImages[random_int(0, count($this->backgroundImages) - 1)];
 
             $imageType = $this->validateBackgroundImage($randomBackgroundImage);
 
@@ -604,7 +611,7 @@ class CaptchaBuilder implements CaptchaBuilderInterface
             $value = current($this->fingerprint);
             next($this->fingerprint);
         } else {
-            $value = mt_rand((int)$min, (int)$max);
+            $value = random_int((int) $min, (int) $max);
             $this->fingerprint[] = $value;
         }
 
@@ -623,10 +630,10 @@ class CaptchaBuilder implements CaptchaBuilderInterface
      */
     protected function interpolate($x, $y, $nw, $ne, $sw, $se)
     {
-        list($r0, $g0, $b0) = $this->getRGB($nw);
-        list($r1, $g1, $b1) = $this->getRGB($ne);
-        list($r2, $g2, $b2) = $this->getRGB($sw);
-        list($r3, $g3, $b3) = $this->getRGB($se);
+        [$r0, $g0, $b0] = $this->getRGB($nw);
+        [$r1, $g1, $b1] = $this->getRGB($ne);
+        [$r2, $g2, $b2] = $this->getRGB($sw);
+        [$r3, $g3, $b3] = $this->getRGB($se);
 
         $cx = 1.0 - $x;
         $cy = 1.0 - $y;
@@ -701,7 +708,10 @@ class CaptchaBuilder implements CaptchaBuilderInterface
         finfo_close($finfo);
 
         if (!in_array($imageType, $this->allowedBackgroundImageTypes)) {
-            throw new Exception('Invalid background image type! Allowed types are: ' . join(', ', $this->allowedBackgroundImageTypes));
+            throw new Exception(
+                'Invalid background image type! Allowed types are: '
+                . implode(', ', $this->allowedBackgroundImageTypes)
+            );
         }
 
         return $imageType;
@@ -717,21 +727,11 @@ class CaptchaBuilder implements CaptchaBuilderInterface
      */
     protected function createBackgroundImageFromType($backgroundImage, $imageType)
     {
-        switch ($imageType) {
-            case 'image/jpeg':
-                $image = imagecreatefromjpeg($backgroundImage);
-                break;
-            case 'image/png':
-                $image = imagecreatefrompng($backgroundImage);
-                break;
-            case 'image/gif':
-                $image = imagecreatefromgif($backgroundImage);
-                break;
-
-            default:
-                throw new Exception('Not supported file type for background image!');
-        }
-
-        return $image;
+        return match ($imageType) {
+            'image/jpeg' => imagecreatefromjpeg($backgroundImage),
+            'image/png' => imagecreatefrompng($backgroundImage),
+            'image/gif' => imagecreatefromgif($backgroundImage),
+            default => throw new Exception('Not supported file type for background image!'),
+        };
     }
 }

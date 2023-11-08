@@ -1,15 +1,18 @@
 <?php
 
-namespace Gregwar\Captcha;
-
-use Symfony\Component\Finder\Finder;
-
 /**
  * Handles actions related to captcha image files including saving and garbage collection
  *
  * @author Gregwar <g.passault@gmail.com>
  * @author Jeremy Livingston <jeremy@quizzle.com>
  */
+
+declare(strict_types=1);
+
+namespace Gregwar\Captcha;
+
+use Symfony\Component\Finder\Finder;
+
 class ImageFileHandler
 {
     /**
@@ -53,15 +56,15 @@ class ImageFileHandler
     /**
      * Saves the provided image content as a file
      *
-     * @param string $contents
+     * @param \GdImage $contents
      *
      * @return string
      */
-    public function saveAsFile($contents)
+    public function saveAsFile(\GdImage $contents): string
     {
         $this->createFolderIfMissing();
 
-        $filename = md5(uniqid()) . '.jpg';
+        $filename = md5(uniqid('', true)) . '.jpg';
         $filePath = $this->webPath . '/' . $this->imageFolder . '/' . $filename;
         imagejpeg($contents, $filePath, 15);
 
@@ -75,7 +78,7 @@ class ImageFileHandler
      */
     public function collectGarbage()
     {
-        if (!mt_rand(1, $this->gcFreq) == 1) {
+        if (!random_int(1, $this->gcFreq) === 1) {
             return false;
         }
 
@@ -83,8 +86,7 @@ class ImageFileHandler
 
         $finder = new Finder();
         $criteria = sprintf('<= now - %s minutes', $this->expiration);
-        $finder->in($this->webPath . '/' . $this->imageFolder)
-            ->date($criteria);
+        $finder->in($this->webPath . '/' . $this->imageFolder)->date($criteria);
 
         foreach ($finder->files() as $file) {
             unlink($file->getPathname());
@@ -96,10 +98,14 @@ class ImageFileHandler
     /**
      * Creates the folder if it doesn't exist
      */
-    protected function createFolderIfMissing()
+    protected function createFolderIfMissing(): void
     {
-        if (!file_exists($this->webPath . '/' . $this->imageFolder)) {
-            mkdir($this->webPath . '/' . $this->imageFolder, 0755);
+        if (
+            !file_exists($this->webPath . '/' . $this->imageFolder)
+            && !mkdir($concurrentDirectory = $this->webPath . '/' . $this->imageFolder, 0755)
+            && !is_dir($concurrentDirectory)
+        ) {
+            throw new \RuntimeException(sprintf('Directory "%s" was not created', $concurrentDirectory));
         }
     }
 }

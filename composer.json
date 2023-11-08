@@ -16,11 +16,17 @@
             "email": "jeremy.j.livingston@gmail.com"
         }
     ],
+    "config": {
+        "platform": {
+            "php": "8.2"
+        }
+    },
     "require": {
-        "php": ">=5.3.0",
+        "php": "8.2.*",
         "ext-gd": "*",
         "ext-mbstring": "*",
-        "symfony/finder": "*"
+        "symfony/finder": "*",
+        "ext-fileinfo": "*"
     },
     "autoload": {
         "psr-4": {
