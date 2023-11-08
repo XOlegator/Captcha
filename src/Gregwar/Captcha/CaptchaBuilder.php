@@ -526,13 +526,13 @@ class CaptchaBuilder implements CaptchaBuilderInterface
                     $p = $this->interpolate(
                         $nX - floor($nX),
                         $nY - floor($nY),
-                        $this->getCol($image, floor($nX), floor($nY), $bg),
-                        $this->getCol($image, ceil($nX), floor($nY), $bg),
-                        $this->getCol($image, floor($nX), ceil($nY), $bg),
-                        $this->getCol($image, ceil($nX), ceil($nY), $bg)
+                        $this->getCol($image, (int) floor($nX), (int) floor($nY), $bg),
+                        $this->getCol($image, (int) ceil($nX), (int) floor($nY), $bg),
+                        $this->getCol($image, (int) floor($nX), (int) ceil($nY), $bg),
+                        $this->getCol($image, (int) ceil($nX), (int) ceil($nY), $bg)
                     );
                 } else {
-                    $p = $this->getCol($image, round($nX), round($nY), $bg);
+                    $p = $this->getCol($image, (int) round($nX), (int) round($nY), $bg);
                 }
 
                 if ($p == 0) {
@@ -660,7 +660,7 @@ class CaptchaBuilder implements CaptchaBuilderInterface
      *
      * @return int
      */
-    protected function getCol($image, $x, $y, $background)
+    protected function getCol($image, int $x, int $y, $background)
     {
         $L = imagesx($image);
         $H = imagesy($image);
